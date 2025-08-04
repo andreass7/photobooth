@@ -1,21 +1,23 @@
 import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Button } from "@heroui/react";
+import PageHead from "@/components/common";
+import LayoutApp from "@/components/layouts";
+import About from "@/components/views/About";
+import HomeApp from "@/components/views/Home";
+import NavbarLayout from "@/components/ui/Navbar/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
 });
 
 export default function Home() {
   return (
-    <div className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
-      <Button color="primary">Click Me</Button>
-    </div>
+    <LayoutApp title="Home">
+      {/* <div>Halo</div> */}
+      <NavbarLayout />
+
+      <HomeApp />
+    </LayoutApp>
   );
 }
