@@ -1,5 +1,6 @@
 import {
   Navbar,
+  NavbarBrand,
   NavbarContent,
   NavbarItem,
   NavbarMenu,
@@ -16,13 +17,26 @@ const menuItems = [
   { label: "About", href: "/about" },
 ];
 
+export const AcmeLogo = () => {
+  return (
+    <svg fill="none" height="36" viewBox="0 0 32 32" width="36">
+      <path
+        clipRule="evenodd"
+        d="M17.6482 10.1305L15.8785 7.02583L7.02979 22.5499H10.5278L17.6482 10.1305ZM19.8798 14.0457L18.11 17.1983L19.394 19.4511H16.8453L15.1056 22.5499H24.7272L19.8798 14.0457Z"
+        fill="currentColor"
+        fillRule="evenodd"
+      />
+    </svg>
+  );
+};
+
 const NavbarLayout = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const router = useRouter();
   const currentPath = router.pathname;
   return (
     <Navbar
-      className="shadow-lg mx-auto rounded-xl sm:w-1/4 sm:top-5"
+      className="lg:shadow-lg shadow-sm mx-auto rounded-xl sm:w-1/6 sm:top-5"
       isBordered
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
@@ -32,12 +46,16 @@ const NavbarLayout = () => {
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           className="sm:hidden"
         />
+        <NavbarBrand>
+          <AcmeLogo />
+          <p className="font-bold text-inherit">PHOTOBOOTH</p>
+        </NavbarBrand>
       </NavbarContent>
       <NavbarContent
         className="hidden sm:flex mx-auto items-center"
         justify="center"
       >
-        <div className="absolute inset-0 flex justify-center space-x-4">
+        <div className="absolute inset-0 flex justify-center space-x-3">
           {menuItems.map((item, index) =>
             currentPath === item.href ? (
               <motion.div
@@ -55,7 +73,7 @@ const NavbarLayout = () => {
           <NavbarItem key={index} className="z-10">
             <Link
               href={item.href}
-              className={`rounded-xl font-semibold text-sm px-5 py-2 transition-colors duration-300 ${
+              className={`rounded-xl font-semibold text-sm px-4 py-2 transition-colors duration-300 ${
                 currentPath === item.href
                   ? "text-gray-800"
                   : "text-gray-600 hover:text-black"

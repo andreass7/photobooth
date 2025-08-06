@@ -5,7 +5,7 @@ const { default: About } = require("@/components/views/About");
 
 const AboutPage = () => {
   return (
-    <LayoutApp>
+    <LayoutApp title="About">
       <NavbarLayout />
       <About />
     </LayoutApp>

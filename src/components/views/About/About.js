@@ -1,5 +1,3 @@
-import Navbar from "@/components/ui/Navbar/Navbar";
-
 const About = () => {
   return (
     <div>
