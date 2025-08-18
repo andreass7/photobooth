@@ -220,7 +220,7 @@ const Photobooth = () => {
               audio={false}
               screenshotFormat="image/jpeg"
               videoConstraints={videoConstraints}
-              className="w-full h-80 object-cover rounded-xl border-4 border-gray-200"
+              className="w-full lg:h-80 h-full object-cover rounded-xl border-4 border-gray-200"
               style={{
                 filter:
                   selectedFilter === "grayscale"
