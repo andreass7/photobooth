@@ -206,7 +206,7 @@ const Photobooth = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto mt-4 p-6">
+    <div className=" mx-auto mt-4 p-6">
       <h1 className="text-3xl text-gray-600 font-bold text-center mb-6">
         📸 Photobooth
       </h1>
@@ -220,7 +220,7 @@ const Photobooth = () => {
               audio={false}
               screenshotFormat="image/jpeg"
               videoConstraints={videoConstraints}
-              className="w-full lg:h-80 h-screen object-cover rounded-xl border-4 border-gray-200"
+              className="w-[700px] h-[480px] object-cover rounded-xl border-4 border-gray-200"
               style={{
                 filter:
                   selectedFilter === "grayscale"
@@ -305,7 +305,7 @@ const Photobooth = () => {
         {photos.length > 0 && (
           <div className="w-full lg:w-1/2">
             <div
-              className="grid gap-2 border w-1/2 mx-auto p-2 rounded-xl"
+              className="grid gap-2 border w-full lg:w-1/2 mx-auto p-2 rounded-xl"
               style={{
                 backgroundColor: backgroundColor,
                 backgroundImage: `url(${backgroundImage})`,
