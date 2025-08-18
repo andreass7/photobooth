@@ -36,7 +36,7 @@ const NavbarLayout = () => {
   const currentPath = router.pathname;
   return (
     <Navbar
-      className="lg:shadow-lg shadow-sm mx-auto rounded-xl sm:w-1/6 sm:top-5"
+      className="lg:shadow-lg border shadow-sm mx-auto rounded-xl sm:w-1/6 sm:top-5"
       isBordered
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}

@@ -11,9 +11,7 @@ const LayoutApp = (props) => {
     <div>
       <Fragment>
         <PageHead title={props.title} />
-        <section
-          className={`min-h-screen bg-gradient-to-b from-green-200 to-white ${inter.className}`}
-        >
+        <section className={`min-h-screen bg-white ${inter.className}`}>
           {props.children}
         </section>
       </Fragment>

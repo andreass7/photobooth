@@ -2,6 +2,7 @@ import { Button } from "@heroui/react";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
+import { RxValueNone } from "react-icons/rx";
 
 const layoutConfig = {
   "2x1": { rows: 2, cols: 1 },
@@ -28,8 +29,22 @@ const captureModes = [
   { id: "timer", label: "Timer (3 Detik)" },
 ];
 
+const backgroundOptions = [
+  { id: 1, label: "black", url: "" },
+  { id: 2, label: "Putih", url: "images/test/1.jpeg" },
+  { id: 3, label: "black", url: "images/test/2.jpeg" },
+  { id: 4, label: "black", url: "images/test/3.jpeg" },
+  { id: 5, label: "black", url: "images/test/4.jpeg" },
+  { id: 6, label: "black", url: "images/test/5.jpeg" },
+  { id: 7, label: "black", url: "images/test/6.jpeg" },
+  { id: 8, label: "black", url: "images/test/7.jpeg" },
+  { id: 9, label: "black", url: "images/test/8.jpeg" },
+];
+
 const Photobooth = () => {
   const [layoutId, setLayoutId] = useState("2x2");
+  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [backgroundImage, setBackgroundImage] = useState(null);
   const [layout, setLayout] = useState(layoutConfig["2x2"]);
   const [photos, setPhotos] = useState([]);
   const [captureMode, setCaptureMode] = useState("manual");
@@ -118,10 +133,15 @@ const Photobooth = () => {
 
     const ctx = canvas.getContext("2d");
 
-    // Background keseluruhan canvas
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+    if (backgroundImage) {
+      const bg = new Image();
+      bg.src = backgroundImage;
+      await new Promise((resolve) => (bg.onload = resolve));
+      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     // Fungsi mirip CSS background-size: cover
     const drawImageCover = (img, x, y, width, height) => {
       const imgRatio = img.width / img.height;
@@ -154,7 +174,7 @@ const Photobooth = () => {
       const y = gap + row * (photoHeight + gap);
 
       // Background putih tiap slot (opsional, sudah ada background global)
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = backgroundColor;
       ctx.fillRect(x, y, photoWidth, photoHeight);
 
       if (i < photos.length) {
@@ -185,19 +205,14 @@ const Photobooth = () => {
     setPhotos([]);
   };
 
-  const handleDone = () => {
-    localStorage.setItem("photos", JSON.stringify(photos));
-    router.push("/editorPage");
-  };
-
   return (
-    <div className="max-w-4xl mx-auto mt-4 p-6">
+    <div className="max-w-6xl mx-auto mt-4 p-6">
       <h1 className="text-3xl text-gray-600 font-bold text-center mb-6">
         📸 Photobooth
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-full space-y-4 relative">
+        <div className="space-y-4 relative">
           <div className=" rounded overflow-hidden relative">
             <Webcam
               ref={webcamRef}
@@ -227,11 +242,14 @@ const Photobooth = () => {
           </div>
 
           <div className="flex gap-2 flex-wrap">
+            <p className="text-sm font-semibold text-gray-400 self-center ">
+              Filter :
+            </p>
             {filterOptions.map((filter) => (
               <Button
                 key={filter.id}
                 onPress={() => setSelectedFilter(filter.id)}
-                className={`px-4 py-1 rounded ${
+                className={`text-xs rounded ${
                   selectedFilter === filter.id
                     ? "bg-green-500 text-white"
                     : "bg-gray-100 text-gray-700"
@@ -247,7 +265,7 @@ const Photobooth = () => {
               <Button
                 key={mode.id}
                 onPress={() => setCaptureMode(mode.id)}
-                className={`px-4 py-1 rounded ${
+                className={`text-xs rounded ${
                   captureMode === mode.id
                     ? "bg-blue-500 text-white"
                     : "bg-gray-100 text-gray-700"
@@ -260,8 +278,13 @@ const Photobooth = () => {
 
           <div className="flex gap-3">
             {photos.length === totalShot ? (
-              <Button onPress={handleDone} className="mt-2" color="success">
-                Done & Edit
+              <Button
+                onPress={handleReset}
+                disabled={photos.length === 0}
+                className="mt-2"
+                color={photos.length === 0 ? "default" : "danger"}
+              >
+                Reset
               </Button>
             ) : (
               <Button
@@ -277,22 +300,15 @@ const Photobooth = () => {
                 Ambil Foto ({photos.length}/{totalShot})
               </Button>
             )}
-
-            <Button
-              onPress={handleReset}
-              disabled={photos.length === 0}
-              className="mt-2"
-              color={photos.length === 0 ? "default" : "danger"}
-            >
-              Reset
-            </Button>
           </div>
         </div>
         {photos.length > 0 && (
           <div className="w-full lg:w-1/2">
             <div
-              className="grid gap-2 border p-2 bg-white rounded"
+              className="grid gap-2 border p-2 rounded-xl"
               style={{
+                backgroundColor: backgroundColor,
+                backgroundImage: `url(${backgroundImage})`,
                 gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
                 gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
               }}
@@ -300,7 +316,7 @@ const Photobooth = () => {
               {Array.from({ length: totalShot }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-gray-100 flex items-center justify-center rounded overflow-hidden"
+                  className="bg-gray-100 flex items-center justify-center rounded-xl overflow-hidden"
                 >
                   {photos[i] ? (
                     <img
@@ -309,6 +325,39 @@ const Photobooth = () => {
                       className="object-cover w-full h-full"
                     />
                   ) : null}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <label className="text-sm font-semibold text-gray-400 self-center ">
+                Background Color :
+              </label>
+              <input
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-8 h-8 rounded-full cursor-pointer"
+              />
+            </div>
+            <div className="flex gap-2 mt-2">
+              <p className="text-sm font-semibold text-gray-400 self-center ">
+                Background Image :
+              </p>
+              {backgroundOptions.map((bg) => (
+                <div
+                  key={bg.id}
+                  className={`w-6 h-6 rounded-full border-2 cursor-pointer overflow-hidden ${
+                    backgroundImage === bg.url
+                      ? "border-green-500"
+                      : "border-gray-300"
+                  }`}
+                  onClick={() => setBackgroundImage(bg.url)}
+                >
+                  <img
+                    src={bg.url}
+                    alt={bg.label}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               ))}
             </div>

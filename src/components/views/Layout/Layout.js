@@ -21,7 +21,7 @@ const Layout = () => {
   return (
     <div className="mt-8 p-6">
       <div className="text-start">
-        <h1 className="text-3xl text-gray-600 font-semibold">Pilih Layout</h1>
+        <h1 className="text-3xl text-green-400 font-semibold">Pilih Layout</h1>
         <h3 className="text-md text-gray-600 font-medium mb-6">
           Silahkan Pilih Layout di Bawah Ini
         </h3>
@@ -31,7 +31,7 @@ const Layout = () => {
           <div
             key={layout.id}
             onClick={() => handleSelect(layout.id)}
-            className={`border bg-white p-6 cursor-pointer rounded-xl text-center shadow hover:shadow-lg transition ${
+            className={` bg-green-300 p-6 cursor-pointer rounded-xl text-center shadow hover:shadow-lg transition ${
               selected === layout.id
                 ? "border-green-400 ring-2 ring-green-300"
                 : ""
