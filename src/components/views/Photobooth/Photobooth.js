@@ -6,14 +6,14 @@ import { RxValueNone } from "react-icons/rx";
 
 const layoutConfig = {
   "2x1": { rows: 2, cols: 1 },
-  "2x2": { rows: 2, cols: 2 },
   "3x1": { rows: 3, cols: 1 },
+  "3x2": { rows: 3, cols: 2 },
   "4x1": { rows: 4, cols: 1 },
 };
 
 const videoConstraints = {
-  width: 1280,
-  height: 720,
+  width: 700,
+  height: 480,
   facingMode: "user",
 };
 
@@ -42,10 +42,10 @@ const backgroundOptions = [
 ];
 
 const Photobooth = () => {
-  const [layoutId, setLayoutId] = useState("2x2");
+  const [layoutId, setLayoutId] = useState("3x2");
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
   const [backgroundImage, setBackgroundImage] = useState(null);
-  const [layout, setLayout] = useState(layoutConfig["2x2"]);
+  const [layout, setLayout] = useState(layoutConfig["3x2"]);
   const [photos, setPhotos] = useState([]);
   const [captureMode, setCaptureMode] = useState("manual");
   const [countdown, setCountdown] = useState(0);
@@ -121,7 +121,7 @@ const Photobooth = () => {
 
     // Ukuran masing-masing foto
     const photoWidth = 600;
-    const photoHeight = 320;
+    const photoHeight = 480;
 
     // Jarak antar foto
     const gap = 20;
@@ -305,7 +305,7 @@ const Photobooth = () => {
         {photos.length > 0 && (
           <div className="w-full lg:w-1/2">
             <div
-              className="grid gap-2 border p-2 rounded-xl"
+              className="grid gap-2 border w-1/2 mx-auto p-2 rounded-xl"
               style={{
                 backgroundColor: backgroundColor,
                 backgroundImage: `url(${backgroundImage})`,

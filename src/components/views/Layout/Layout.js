@@ -4,7 +4,7 @@ import { useState } from "react";
 const layoutOption = [
   { id: "2x1", label: "2 x 1", rows: 2, cols: 1 },
   { id: "3x1", label: "3 x 1", rows: 3, cols: 1 },
-  { id: "2x2", label: "2 x 2", rows: 2, cols: 2 },
+  { id: "3x2", label: "3 x 2", rows: 3, cols: 2 },
   { id: "4x1", label: "4 x 1", rows: 4, cols: 1 },
 ];
 
