@@ -30,15 +30,15 @@ const captureModes = [
 ];
 
 const backgroundOptions = [
-  { id: 1, label: "Putih", url: "" },
-  { id: 2, label: "Background 1", url: "images/test/1.jpeg" },
-  { id: 3, label: "Background 2", url: "images/test/2.jpeg" },
-  { id: 4, label: "Background 3", url: "images/test/3.jpeg" },
-  { id: 5, label: "Background 4", url: "images/test/4.jpeg" },
-  { id: 6, label: "Background 5", url: "images/test/5.jpeg" },
-  { id: 7, label: "Background 6", url: "images/test/6.jpeg" },
-  { id: 8, label: "Background 7", url: "images/test/7.jpeg" },
-  { id: 9, label: "Background 8", url: "images/test/8.jpeg" },
+  { id: 1, label: "black", url: "" },
+  { id: 2, label: "Putih", url: "images/test/1.jpeg" },
+  { id: 3, label: "black", url: "images/test/2.jpeg" },
+  { id: 4, label: "black", url: "images/test/3.jpeg" },
+  { id: 5, label: "black", url: "images/test/4.jpeg" },
+  { id: 6, label: "black", url: "images/test/5.jpeg" },
+  { id: 7, label: "black", url: "images/test/6.jpeg" },
+  { id: 8, label: "black", url: "images/test/7.jpeg" },
+  { id: 9, label: "black", url: "images/test/8.jpeg" },
 ];
 
 const Photobooth = () => {
@@ -55,7 +55,6 @@ const Photobooth = () => {
   const previewRef = useRef(null);
   const router = useRouter();
 
-  // MOBILE FIX: Track preview container size
   useEffect(() => {
     const updatePreviewSize = () => {
       if (previewRef.current) {
@@ -69,7 +68,6 @@ const Photobooth = () => {
 
     return () => window.removeEventListener("resize", updatePreviewSize);
   }, [photos.length]);
-
   useEffect(() => {
     const selected = localStorage.getItem("selectedLayout") || "3x2";
     setLayoutId(selected);
@@ -86,14 +84,13 @@ const Photobooth = () => {
     if (countdown === 0 && captureMode === "timer") {
       capturePhoto();
     }
-  }, [countdown, captureMode]);
+  }, [countdown]);
 
   const handleCapture = () => {
-    const totalShot = layout.rows * layout.cols;
     if (photos.length >= totalShot || countdown > 0) return;
 
     if (captureMode === "timer") {
-      setCountdown(3);
+      setCountdown(3); // mulai hitungan mundur 3...2...1
     } else {
       capturePhoto();
     }
@@ -134,7 +131,6 @@ const Photobooth = () => {
     }
   };
 
-  // MOBILE FIX: Improved drawImageCover with exact same logic as CSS object-fit: cover
   const drawImageCover = (ctx, img, x, y, width, height) => {
     const imgRatio = img.width / img.height;
     const containerRatio = width / height;
@@ -264,15 +260,9 @@ const Photobooth = () => {
     link.href = finalImage;
     link.download = `photobooth-${Date.now()}.jpeg`;
 
-    // For mobile compatibility
-    if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
-      // Open in new window for mobile
-      window.open(finalImage, "_blank");
-    } else {
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const totalShot = layout.rows * layout.cols;
@@ -281,7 +271,6 @@ const Photobooth = () => {
     setPhotos([]);
   };
 
-  // MOBILE FIX: Consistent preview style with exact aspect ratio
   const getPreviewStyle = () => {
     const style = {
       backgroundColor: backgroundColor,
@@ -289,6 +278,7 @@ const Photobooth = () => {
       gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
     };
 
+    // Only add background image if it exists and is not empty
     if (backgroundImage && backgroundImage !== "") {
       style.backgroundImage = `url(${backgroundImage})`;
       style.backgroundSize = "cover";
@@ -327,8 +317,8 @@ const Photobooth = () => {
               }}
             />
             {countdown > 0 && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                <span className="text-white text-6xl md:text-7xl font-bold animate-pulse">
+              <div className="absolute inset-0 flex items-center justify-center bg-transparent">
+                <span className="text-green-400 text-6xl md:text-7xl font-bold animate-pulse">
                   {countdown}
                 </span>
               </div>
