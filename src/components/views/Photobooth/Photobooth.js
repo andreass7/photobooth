@@ -12,8 +12,8 @@ const layoutConfig = {
 };
 
 const videoConstraints = {
-  width: 700,
-  height: 480,
+  width: 1280,
+  height: 720,
   facingMode: "user",
 };
 
@@ -30,31 +30,48 @@ const captureModes = [
 ];
 
 const backgroundOptions = [
-  { id: 1, label: "black", url: "" },
-  { id: 2, label: "Putih", url: "images/test/1.jpeg" },
-  { id: 3, label: "black", url: "images/test/2.jpeg" },
-  { id: 4, label: "black", url: "images/test/3.jpeg" },
-  { id: 5, label: "black", url: "images/test/4.jpeg" },
-  { id: 6, label: "black", url: "images/test/5.jpeg" },
-  { id: 7, label: "black", url: "images/test/6.jpeg" },
-  { id: 8, label: "black", url: "images/test/7.jpeg" },
-  { id: 9, label: "black", url: "images/test/8.jpeg" },
+  { id: 1, label: "Putih", url: "" },
+  { id: 2, label: "Background 1", url: "images/test/1.jpeg" },
+  { id: 3, label: "Background 2", url: "images/test/2.jpeg" },
+  { id: 4, label: "Background 3", url: "images/test/3.jpeg" },
+  { id: 5, label: "Background 4", url: "images/test/4.jpeg" },
+  { id: 6, label: "Background 5", url: "images/test/5.jpeg" },
+  { id: 7, label: "Background 6", url: "images/test/6.jpeg" },
+  { id: 8, label: "Background 7", url: "images/test/7.jpeg" },
+  { id: 9, label: "Background 8", url: "images/test/8.jpeg" },
 ];
 
 const Photobooth = () => {
   const [layoutId, setLayoutId] = useState("3x2");
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
-  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [backgroundImage, setBackgroundImage] = useState("");
   const [layout, setLayout] = useState(layoutConfig["3x2"]);
   const [photos, setPhotos] = useState([]);
   const [captureMode, setCaptureMode] = useState("manual");
   const [countdown, setCountdown] = useState(0);
   const [selectedFilter, setSelectedFilter] = useState("none");
+  const [previewSize, setPreviewSize] = useState({ width: 0, height: 0 });
   const webcamRef = useRef(null);
+  const previewRef = useRef(null);
   const router = useRouter();
 
+  // MOBILE FIX: Track preview container size
   useEffect(() => {
-    const selected = localStorage.getItem("selectedLayout") || "2x2";
+    const updatePreviewSize = () => {
+      if (previewRef.current) {
+        const rect = previewRef.current.getBoundingClientRect();
+        setPreviewSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    updatePreviewSize();
+    window.addEventListener("resize", updatePreviewSize);
+
+    return () => window.removeEventListener("resize", updatePreviewSize);
+  }, [photos.length]);
+
+  useEffect(() => {
+    const selected = localStorage.getItem("selectedLayout") || "3x2";
     setLayoutId(selected);
     setLayout(layoutConfig[selected]);
   }, []);
@@ -69,13 +86,14 @@ const Photobooth = () => {
     if (countdown === 0 && captureMode === "timer") {
       capturePhoto();
     }
-  }, [countdown]);
+  }, [countdown, captureMode]);
 
   const handleCapture = () => {
+    const totalShot = layout.rows * layout.cols;
     if (photos.length >= totalShot || countdown > 0) return;
 
     if (captureMode === "timer") {
-      setCountdown(3); // mulai hitungan mundur 3...2...1
+      setCountdown(3);
     } else {
       capturePhoto();
     }
@@ -116,87 +134,145 @@ const Photobooth = () => {
     }
   };
 
+  // MOBILE FIX: Improved drawImageCover with exact same logic as CSS object-fit: cover
+  const drawImageCover = (ctx, img, x, y, width, height) => {
+    const imgRatio = img.width / img.height;
+    const containerRatio = width / height;
+
+    let drawWidth,
+      drawHeight,
+      offsetX = 0,
+      offsetY = 0;
+
+    if (imgRatio > containerRatio) {
+      // Image is wider than container
+      drawHeight = height;
+      drawWidth = height * imgRatio;
+      offsetX = (width - drawWidth) / 2;
+    } else {
+      // Image is taller than container
+      drawWidth = width;
+      drawHeight = width / imgRatio;
+      offsetY = (height - drawHeight) / 2;
+    }
+
+    // Create clipping path
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, width, height);
+    ctx.clip();
+
+    ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
+
+    ctx.restore();
+  };
+
   const handleDownloadAsCollage = async () => {
     const { rows, cols } = layout;
 
-    // Ukuran masing-masing foto
-    const photoWidth = 600;
-    const photoHeight = 480;
+    // MOBILE FIX: Calculate canvas size based on preview aspect ratio
+    const previewAspectRatio = previewSize.width / previewSize.height;
 
-    // Jarak antar foto
-    const gap = 20;
+    // Base dimensions for high quality output
+    let baseWidth = 1200;
+    let baseHeight = baseWidth / previewAspectRatio;
 
-    // Ukuran total canvas: ditambah total gap antar kolom dan baris
+    // Ensure minimum height for readability
+    if (baseHeight < 800) {
+      baseHeight = 800;
+      baseWidth = baseHeight * previewAspectRatio;
+    }
+
+    // Calculate photo dimensions with proper spacing
+    const gap = Math.max(20, baseWidth * 0.02); // Dynamic gap based on canvas size
+    const photoWidth = (baseWidth - (cols + 1) * gap) / cols;
+    const photoHeight = (baseHeight - (rows + 1) * gap) / rows;
+
     const canvas = document.createElement("canvas");
-    canvas.width = cols * photoWidth + (cols + 1) * gap;
-    canvas.height = rows * photoHeight + (rows + 1) * gap;
+    canvas.width = baseWidth;
+    canvas.height = baseHeight;
 
     const ctx = canvas.getContext("2d");
 
-    if (backgroundImage) {
-      const bg = new Image();
-      bg.src = backgroundImage;
-      await new Promise((resolve) => (bg.onload = resolve));
-      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    } else {
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    // Fungsi mirip CSS background-size: cover
-    const drawImageCover = (img, x, y, width, height) => {
-      const imgRatio = img.width / img.height;
-      const boxRatio = width / height;
+    // MOBILE FIX: Handle high DPI displays
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = baseWidth * dpr;
+    canvas.height = baseHeight * dpr;
+    canvas.style.width = baseWidth + "px";
+    canvas.style.height = baseHeight + "px";
+    ctx.scale(dpr, dpr);
 
-      let sx = 0;
-      let sy = 0;
-      let sWidth = img.width;
-      let sHeight = img.height;
+    // Background handling
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, baseWidth, baseHeight);
 
-      if (imgRatio > boxRatio) {
-        const newWidth = img.height * boxRatio;
-        sx = (img.width - newWidth) / 2;
-        sWidth = newWidth;
-      } else {
-        const newHeight = img.width / boxRatio;
-        sy = (img.height - newHeight) / 2;
-        sHeight = newHeight;
+    if (backgroundImage && backgroundImage !== "") {
+      try {
+        const bg = new Image();
+        bg.src = backgroundImage;
+        bg.crossOrigin = "anonymous"; // MOBILE FIX: Handle CORS
+
+        await new Promise((resolve, reject) => {
+          bg.onload = resolve;
+          bg.onerror = reject;
+          // MOBILE FIX: Add timeout for slow connections
+          setTimeout(() => reject(new Error("Background load timeout")), 10000);
+        });
+
+        drawImageCover(ctx, bg, 0, 0, baseWidth, baseHeight);
+      } catch (error) {
+        console.warn("Failed to load background image:", error);
       }
+    }
 
-      ctx.drawImage(img, sx, sy, sWidth, sHeight, x, y, width, height);
-    };
-
+    // Draw photos with exact same aspect ratio as preview
     for (let i = 0; i < rows * cols; i++) {
       const col = i % cols;
       const row = Math.floor(i / cols);
 
-      // Posisi X dan Y sudah memperhitungkan gap
       const x = gap + col * (photoWidth + gap);
       const y = gap + row * (photoHeight + gap);
 
-      // Background putih tiap slot (opsional, sudah ada background global)
-      ctx.fillStyle = backgroundColor;
+      // Photo slot background
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(x, y, photoWidth, photoHeight);
 
       if (i < photos.length) {
-        const img = new Image();
-        img.src = photos[i];
+        try {
+          const img = new Image();
+          img.src = photos[i];
 
-        await new Promise((resolve) => {
-          img.onload = resolve;
-        });
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            setTimeout(() => reject(new Error("Photo load timeout")), 5000);
+          });
 
-        drawImageCover(img, x, y, photoWidth, photoHeight);
+          // MOBILE FIX: Use exact same cover logic as preview
+          drawImageCover(ctx, img, x, y, photoWidth, photoHeight);
+        } catch (error) {
+          console.warn(`Failed to load photo ${i}:`, error);
+        }
       }
     }
 
-    const finalImage = canvas.toDataURL("image/jpeg");
+    // MOBILE FIX: Higher quality JPEG for better results
+    const finalImage = canvas.toDataURL("image/jpeg", 0.95);
 
+    // MOBILE FIX: Better download handling for mobile
     const link = document.createElement("a");
     link.href = finalImage;
-    link.download = "hasil-kolase.jpeg";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    link.download = `photobooth-${Date.now()}.jpeg`;
+
+    // For mobile compatibility
+    if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
+      // Open in new window for mobile
+      window.open(finalImage, "_blank");
+    } else {
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const totalShot = layout.rows * layout.cols;
@@ -205,22 +281,40 @@ const Photobooth = () => {
     setPhotos([]);
   };
 
+  // MOBILE FIX: Consistent preview style with exact aspect ratio
+  const getPreviewStyle = () => {
+    const style = {
+      backgroundColor: backgroundColor,
+      gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
+      gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
+    };
+
+    if (backgroundImage && backgroundImage !== "") {
+      style.backgroundImage = `url(${backgroundImage})`;
+      style.backgroundSize = "cover";
+      style.backgroundPosition = "center";
+      style.backgroundRepeat = "no-repeat";
+    }
+
+    return style;
+  };
+
   return (
-    <div className=" mx-auto mt-4 p-6">
-      <h1 className="text-3xl text-gray-600 font-bold text-center mb-6">
+    <div className="mx-auto mt-4 p-6 max-w-6xl">
+      <h1 className="text-2xl md:text-3xl text-gray-600 font-bold text-center mb-6">
         📸 Photobooth
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="space-y-4 relative">
-          <div className=" rounded overflow-hidden relative">
+        <div className="w-full lg:w-1/2 space-y-4 relative">
+          <div className="rounded overflow-hidden relative">
             <Webcam
               ref={webcamRef}
               mirrored
               audio={false}
               screenshotFormat="image/jpeg"
               videoConstraints={videoConstraints}
-              className="w-[700px] h-[480px] object-cover rounded-xl border-4 border-gray-200"
+              className="w-full h-64 md:h-80 object-cover rounded-xl border-4 border-gray-200"
               style={{
                 filter:
                   selectedFilter === "grayscale"
@@ -233,8 +327,8 @@ const Photobooth = () => {
               }}
             />
             {countdown > 0 && (
-              <div className="absolute inset-0 flex items-center justify-center bg-transparent">
-                <span className="text-green-300 text-7xl font-bold animate-pulse">
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                <span className="text-white text-6xl md:text-7xl font-bold animate-pulse">
                   {countdown}
                 </span>
               </div>
@@ -242,7 +336,7 @@ const Photobooth = () => {
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            <p className="text-sm font-semibold text-gray-400 self-center ">
+            <p className="text-sm font-semibold text-gray-400 self-center">
               Filter :
             </p>
             {filterOptions.map((filter) => (
@@ -260,7 +354,7 @@ const Photobooth = () => {
             ))}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {captureModes.map((mode) => (
               <Button
                 key={mode.id}
@@ -280,9 +374,8 @@ const Photobooth = () => {
             {photos.length === totalShot ? (
               <Button
                 onPress={handleReset}
-                disabled={photos.length === 0}
-                className="mt-2"
-                color={photos.length === 0 ? "default" : "danger"}
+                className="mt-2 w-full"
+                color="danger"
               >
                 Reset
               </Button>
@@ -290,7 +383,7 @@ const Photobooth = () => {
               <Button
                 onPress={handleCapture}
                 disabled={photos.length >= totalShot || countdown > 0}
-                className="mt-2"
+                className="mt-2 w-full"
                 color={
                   photos.length >= totalShot || countdown > 0
                     ? "default"
@@ -302,21 +395,19 @@ const Photobooth = () => {
             )}
           </div>
         </div>
+
         {photos.length > 0 && (
           <div className="w-full lg:w-1/2">
+            {/* MOBILE FIX: Preview container with ref for size tracking */}
             <div
-              className="grid gap-2 border w-full lg:w-1/2 mx-auto p-2 rounded-xl"
-              style={{
-                backgroundColor: backgroundColor,
-                backgroundImage: `url(${backgroundImage})`,
-                gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
-                gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
-              }}
+              ref={previewRef}
+              className="grid gap-1 md:gap-2 border w-full max-w-sm mx-auto p-2 rounded-xl"
+              style={getPreviewStyle()}
             >
               {Array.from({ length: totalShot }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-gray-100 flex items-center justify-center rounded-xl overflow-hidden"
+                  className="bg-gray-100 flex items-center justify-center rounded-lg overflow-hidden aspect-[4/3]"
                 >
                   {photos[i] ? (
                     <img
@@ -328,8 +419,9 @@ const Photobooth = () => {
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2 mt-2">
-              <label className="text-sm font-semibold text-gray-400 self-center ">
+
+            <div className="flex items-center gap-2 mt-4 justify-center">
+              <label className="text-sm font-semibold text-gray-400">
                 Background Color :
               </label>
               <input
@@ -339,31 +431,40 @@ const Photobooth = () => {
                 className="w-8 h-8 rounded-full cursor-pointer"
               />
             </div>
-            <div className="flex gap-2 mt-2">
-              <p className="text-sm font-semibold text-gray-400 self-center ">
+
+            <div className="flex gap-2 mt-3 flex-wrap justify-center">
+              <p className="text-sm font-semibold text-gray-400 self-center w-full text-center mb-2">
                 Background Image :
               </p>
-              {backgroundOptions.map((bg) => (
-                <div
-                  key={bg.id}
-                  className={`w-6 h-6 rounded-full border-2 cursor-pointer overflow-hidden ${
-                    backgroundImage === bg.url
-                      ? "border-green-500"
-                      : "border-gray-300"
-                  }`}
-                  onClick={() => setBackgroundImage(bg.url)}
-                >
-                  <img
-                    src={bg.url}
-                    alt={bg.label}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
+              <div className="flex gap-2 flex-wrap justify-center">
+                {backgroundOptions.map((bg) => (
+                  <div
+                    key={bg.id}
+                    className={`w-8 h-8 rounded-full border-2 cursor-pointer overflow-hidden ${
+                      backgroundImage === bg.url
+                        ? "border-green-500"
+                        : "border-gray-300"
+                    }`}
+                    onClick={() => setBackgroundImage(bg.url)}
+                    title={bg.label}
+                  >
+                    {bg.url ? (
+                      <img
+                        src={bg.url}
+                        alt={bg.label}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white border border-gray-300"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
+
             <Button
               onPress={handleDownloadAsCollage}
-              className="mt-4 bg-green-600 text-white font-bold px-4 py-2 w-full"
+              className="mt-6 bg-green-600 text-white font-bold px-4 py-2 w-full"
             >
               Download Kolase
             </Button>
